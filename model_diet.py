@@ -1,10 +1,10 @@
-# model_final.py — versão enxuta e limpa do modelo de recomendação de dieta
+# model_final.py — versão enxuta e limpa do modelo de recomendação de dieta (com MAE)
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import OrdinalEncoder, LabelEncoder
+from sklearn.preprocessing import OrdinalEncoder, LabelEncoder, label_binarize
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
@@ -15,6 +15,7 @@ from sklearn.metrics import (
     classification_report,
     confusion_matrix,
     ConfusionMatrixDisplay,
+    mean_absolute_error,
 )
 import joblib
 
@@ -29,6 +30,8 @@ SELECTED_FEATURES = [
     "Glucose_Level",
     "LDL",
     "BMI",
+    "Waist_Circumference",
+    "CRP",
     "Triglycerides",
     "Systolic_BP",
 ]
@@ -120,10 +123,15 @@ acc = accuracy_score(y_test, y_pred)
 f1w = f1_score(y_test, y_pred, average="weighted")
 top2 = (np.argsort(proba, axis=1)[:, -2:] == y_test.reshape(-1, 1)).any(axis=1).mean()
 
+# --- Cálculo do MAE das probabilidades ---
+y_test_bin = label_binarize(y_test, classes=np.arange(len(label_enc.classes_)))
+mae = mean_absolute_error(y_test_bin, proba)
+
 print("\n=== RESULTADOS FINAIS — Diet_Recommendation ===")
 print(f"Accuracy........: {acc:.3f}")
 print(f"F1-weighted.....: {f1w:.3f}")
-print(f"Top-2 Accuracy..: {top2:.3f}\n")
+print(f"Top-2 Accuracy..: {top2:.3f}")
+print(f"Mean Absolute Error (MAE): {mae:.4f}\n")
 
 print("Relatório de Classificação:")
 print(classification_report(y_test, y_pred, target_names=label_enc.classes_))
@@ -139,6 +147,9 @@ plt.title("Matriz de Confusão — Diet_Recommendation (Final)")
 plt.tight_layout()
 plt.savefig(PLOTS_DIR / "confusion_matrix_diet_final.png", dpi=150)
 plt.show()
+
+# (opcional) ver distribuição das classes
+print("\nDistribuição das classes no dataset:")
 print(df["Diet_Recommendation"].value_counts())
 
 # ===============================
