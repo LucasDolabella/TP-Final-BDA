@@ -11,20 +11,16 @@ from sklearn.metrics import accuracy_score, f1_score
 from sklearn.inspection import permutation_importance
 import numpy as np
 
-CSV_PATH = "personalised_dataset.csv"  # ajuste se necessário
-TARGET = "Exercise_Recommendation"  # agora estamos analisando o modelo de EXERCÍCIO
+CSV_PATH = "personalised_dataset.csv"
+TARGET = "Exercise_Recommendation"
 N_TOP = 12  # quantas features destacar no gráfico
 
-# 1) carregar dados
 df = pd.read_csv(CSV_PATH)
 
-# 2) descartar colunas que causam vazamento/ID
+# descartar colunas "irrelevantes"
 to_drop = [
-    "Diet_Recommendation",  # dropa a outra recomendação
-    "Exercise_Recommendation",  # dropa o próprio target da tabela
-    "id",
-    "ID",
-    "patient_id",
+    "Diet_Recommendation",
+    "Exercise_Recommendation",
     "Patient_ID",
 ]
 to_drop = [c for c in to_drop if c in df.columns]
@@ -32,7 +28,7 @@ to_drop = [c for c in to_drop if c in df.columns]
 y = df[TARGET].copy()
 X = df.drop(columns=to_drop).copy()
 
-# 3) remover linhas com alvo faltante e alinhar X/y
+# remover linhas com alvo faltante e alinhar X/y
 mask = y.notna()
 X, y = X[mask], y[mask]
 
@@ -40,7 +36,7 @@ X, y = X[mask], y[mask]
 cat_cols = X.select_dtypes(include=["object", "category"]).columns.tolist()
 num_cols = X.select_dtypes(include=["number", "bool"]).columns.tolist()
 
-# 5) pipeline: ordinal encode p/ categóricas + random forest
+# pipeline -> ordinal encode p/ categóricas + random forest
 pre = ColumnTransformer(
     transformers=[
         (
@@ -63,7 +59,7 @@ rf = RandomForestClassifier(
 
 pipe = Pipeline([("pre", pre), ("rf", rf)])
 
-# 6) treino/validação rápida
+# treino/validação rápida
 X_tr, X_te, y_tr, y_te = train_test_split(
     X, y, test_size=0.2, random_state=42, stratify=y
 )
@@ -74,7 +70,7 @@ print(
     f"F1-weighted: {f1_score(y_te, y_pred, average='weighted'):.3f}"
 )
 
-# 7) importância por permutação
+# importância por permutação
 out_feature_names = cat_cols + num_cols
 r = permutation_importance(pipe, X_te, y_te, n_repeats=10, random_state=42, n_jobs=-1)
 importances = pd.Series(r.importances_mean, index=out_feature_names)
@@ -84,7 +80,7 @@ imp_top = importances.sort_values(ascending=True).tail(N_TOP)
 print("\nTop features para Exercise_Recommendation:")
 print(importances.sort_values(ascending=False).head(N_TOP))
 
-# 8) plot e salvar
+# plot
 plt.figure(figsize=(8, max(4, 0.4 * N_TOP)))
 imp_top.plot(kind="barh")
 plt.title(f"Top {N_TOP} importâncias — {TARGET}")

@@ -19,9 +19,9 @@ from sklearn.metrics import (
 )
 import joblib
 
-# ===============================
+
 # CONFIGURAÇÕES
-# ===============================
+
 CSV_PATH = "personalised_dataset.csv"
 TARGET = "Diet_Recommendation"
 SELECTED_FEATURES = [
@@ -43,9 +43,9 @@ MODELS_DIR.mkdir(exist_ok=True, parents=True)
 PLOTS_DIR = Path("plots")
 PLOTS_DIR.mkdir(exist_ok=True, parents=True)
 
-# ===============================
-# 1. CARREGAR E PREPARAR DADOS
-# ===============================
+
+# CARREGAR E PREPARAR DADOS
+
 df = pd.read_csv(CSV_PATH)
 X = df[SELECTED_FEATURES].copy()
 y = df[TARGET].copy()
@@ -85,16 +85,15 @@ preprocessor = ColumnTransformer(
 label_enc = LabelEncoder()
 y_enc = label_enc.fit_transform(y)
 
-# ===============================
-# 2. TREINO / TESTE
-# ===============================
+# TREINO / TESTE
+
 X_train, X_test, y_train, y_test = train_test_split(
     X, y_enc, test_size=TEST_SIZE, stratify=y_enc, random_state=RANDOM_STATE
 )
 
-# ===============================
-# 3. MODELO
-# ===============================
+
+# MODELO
+
 model = Pipeline(
     [
         ("pre", preprocessor),
@@ -116,14 +115,14 @@ model.fit(X_train, y_train)
 y_pred = model.predict(X_test)
 proba = model.predict_proba(X_test)
 
-# ===============================
-# 4. MÉTRICAS ESSENCIAIS
-# ===============================
+
+# MÉTRICAS ESSENCIAIS
+
 acc = accuracy_score(y_test, y_pred)
 f1w = f1_score(y_test, y_pred, average="weighted")
 top2 = (np.argsort(proba, axis=1)[:, -2:] == y_test.reshape(-1, 1)).any(axis=1).mean()
 
-# --- Cálculo do MAE das probabilidades ---
+# Cálculo do MAE das probabilidades
 y_test_bin = label_binarize(y_test, classes=np.arange(len(label_enc.classes_)))
 mae = mean_absolute_error(y_test_bin, proba)
 
@@ -136,9 +135,9 @@ print(f"Mean Absolute Error (MAE): {mae:.4f}\n")
 print("Relatório de Classificação:")
 print(classification_report(y_test, y_pred, target_names=label_enc.classes_))
 
-# ===============================
-# 5. MATRIZ DE CONFUSÃO
-# ===============================
+
+# MATRIZ DE CONFUSÃO
+
 cm = confusion_matrix(y_test, y_pred)
 disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=label_enc.classes_)
 fig, ax = plt.subplots(figsize=(7, 6))
@@ -148,13 +147,13 @@ plt.tight_layout()
 plt.savefig(PLOTS_DIR / "confusion_matrix_diet_final.png", dpi=150)
 plt.show()
 
-# (opcional) ver distribuição das classes
+# ver distribuição das classes
 print("\nDistribuição das classes no dataset:")
 print(df["Diet_Recommendation"].value_counts())
 
-# ===============================
-# 6. SALVAR MODELO
-# ===============================
+
+# SALVAR MODELO
+
 joblib.dump(model, MODELS_DIR / "diet_recommender_final.pkl")
 joblib.dump(label_enc, MODELS_DIR / "label_encoder_final.pkl")
 print("\nModelos salvos em pasta models/")
