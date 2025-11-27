@@ -19,29 +19,46 @@ from sklearn.metrics import (
 )
 import joblib
 
-
 # CONFIGURAÇÕES
 
 CSV_PATH = "personalised_dataset.csv"
 TARGET = "Exercise_Recommendation"
+
+# FEATURES SELECIONADAS
+# Baseado em importâncias + evidência clínica para prescrição de exercício
 SELECTED_FEATURES = [
-    # Top sinais para exercício
-    "Glucose_Level",
-    "HbA1c",
-    "BMI",
-    "Age",
-    "Physical_Activity_Level",
-    "Cholesterol",
+    # Perfil lipídico (crítico para risco cardiovascular)
     "LDL",
     "HDL",
-    "Resting_Heart_Rate",
-    "HRV",
-    "Family_History_CVD",
+    "Cholesterol",
+    "Triglycerides",
+    
+    # Metabolismo glicêmico (tolerância ao exercício)
+    "HbA1c",
+    "Glucose_Level",
+    
+    # Pressão e função cardiovascular
+    "Systolic_BP",
+    "Diastolic_BP",
+    "HRV",  # Variabilidade cardíaca - fundamental para exercício
+    
+    # Função renal e inflamação
+    "eGFR",
+    "CRP",
+    
+    # Risco genético e histórico
     "PRS_Cardiometabolic",
-    "PRS_Type2Diabetes",
+    "Family_History_CVD",
+    "BRCA_Pathogenic_Variant",
+    
+    # Composição corporal e idade
+    "BMI",
+    "Waist_Circumference",
+    "Age",
 ]
+
 RANDOM_STATE = 42
-TEST_SIZE = 0.2
+TEST_SIZE = 0.25
 
 MODELS_DIR = Path("models")
 MODELS_DIR.mkdir(exist_ok=True, parents=True)
@@ -50,15 +67,26 @@ PLOTS_DIR.mkdir(exist_ok=True, parents=True)
 
 
 # CARREGAR E PREPARAR DADOS
+
 df = pd.read_csv(CSV_PATH)
 
-# verificar se as colunas existem
-missing = [c for c in SELECTED_FEATURES + [TARGET] if c not in df.columns]
+# Verificar se todas as features existem
+missing = [f for f in SELECTED_FEATURES if f not in df.columns]
 if missing:
-    raise ValueError(f"Colunas ausentes no CSV: {missing}")
+    raise ValueError(f"Features ausentes no dataset: {missing}")
 
 X = df[SELECTED_FEATURES].copy()
 y = df[TARGET].copy()
+
+print(f"\n{'='*70}")
+print(f"MODELO DE RECOMENDAÇÃO: {TARGET}")
+print(f"{'='*70}")
+print(f"Features selecionadas (Top 12 de importance_exercise.py):")
+for i, feat in enumerate(SELECTED_FEATURES, 1):
+    print(f"  {i:2d}. {feat}")
+print(f"\nTotal de features: {len(SELECTED_FEATURES)}")
+print(f"Total de amostras: {len(X)}")
+print(f"{'='*70}\n")
 
 cat_cols = X.select_dtypes(include=["object", "category", "bool"]).columns.tolist()
 num_cols = X.columns.difference(cat_cols).tolist()
@@ -110,9 +138,12 @@ model = Pipeline(
         (
             "rf",
             RandomForestClassifier(
-                n_estimators=200,
-                max_depth=15,
-                min_samples_leaf=2,
+                n_estimators=200,        
+                max_depth=8,             # Balanceado
+                min_samples_leaf=8,      # Moderado
+                min_samples_split=20,    # Moderado
+                max_features='sqrt',
+                min_impurity_decrease=0.001,  
                 class_weight="balanced",
                 random_state=RANDOM_STATE,
                 n_jobs=-1,
@@ -125,10 +156,27 @@ model.fit(X_train, y_train)
 y_pred = model.predict(X_test)
 proba = model.predict_proba(X_test)
 
+# Validação de overfitting
+y_train_pred = model.predict(X_train)
+acc_train = accuracy_score(y_train, y_train_pred)
+acc_test = accuracy_score(y_test, y_pred)
+
+print(f"\nValidação de Overfitting:")
+print(f"  Accuracy (treino): {acc_train:.3f}")
+print(f"  Accuracy (teste):  {acc_test:.3f}")
+print(f"  Diferença:         {(acc_train - acc_test)*100:.1f}%")
+
+if acc_train - acc_test > 0.15:
+    print(f"  ALERTA: Possível overfitting!")
+elif acc_test > 0.95:
+    print(f"  ALERTA: Acurácia muito alta - verificar data leakage!")
+else:
+    print(f"  Modelo generaliza adequadamente")
+
 
 # MÉTRICAS ESSENCIAIS
 
-acc = accuracy_score(y_test, y_pred)
+acc = acc_test
 f1w = f1_score(y_test, y_pred, average="weighted")
 top2 = (np.argsort(proba, axis=1)[:, -2:] == y_test.reshape(-1, 1)).any(axis=1).mean()
 
@@ -144,6 +192,24 @@ print(f"Mean Absolute Error (MAE): {mae:.4f}\n")
 
 print("Relatório de Classificação:")
 print(classification_report(y_test, y_pred, target_names=label_enc.classes_))
+
+
+# IMPORTÂNCIA DE FEATURES (Feature Importance do modelo treinado)
+print("\n" + "="*70)
+print("IMPORTÂNCIA DAS 12 FEATURES SELECIONADAS")
+print("="*70)
+
+rf_model = model.named_steps['rf']
+feature_names = SELECTED_FEATURES
+
+importances = rf_model.feature_importances_
+indices = np.argsort(importances)[::-1]
+
+for i in range(len(feature_names)):
+    idx = indices[i]
+    print(f"{i+1:2d}. {feature_names[idx]:30s} → {importances[idx]:.4f}")
+
+print("="*70 + "\n")
 
 
 # MATRIZ DE CONFUSÃO
