@@ -70,7 +70,7 @@ y = df[TARGET].copy()
 print(f"\n{'='*70}")
 print(f"MODELO DE RECOMENDAÇÃO: {TARGET}")
 print(f"{'='*70}")
-print(f"Features selecionadas (Top 12 de importance_exercise.py):")
+print(f"Features selecionadas (Top 15 de importance_exercise.py):")
 for i, feat in enumerate(SELECTED_FEATURES, 1):
     print(f"  {i:2d}. {feat}")
 print(f"\nTotal de features: {len(SELECTED_FEATURES)}")
@@ -128,9 +128,9 @@ model = Pipeline(
             "rf",
             RandomForestClassifier(
                 n_estimators=200,        
-                max_depth=8,             # Balanceado
-                min_samples_leaf=8,      # Moderado
-                min_samples_split=20,    # Moderado
+                max_depth=8,
+                min_samples_leaf=8,
+                min_samples_split=20,
                 max_features='sqrt',
                 min_impurity_decrease=0.001,  
                 class_weight="balanced",

@@ -29,21 +29,21 @@ TARGET = "Diet_Recommendation"
 
 # TOP 12 FEATURES mais importantes (baseado em importance_diet.py)
 SELECTED_FEATURES = [
-    "Alcohol_Consumption",      # 0.2166
-    "LDL",                       # 0.121
-    "Gender",                    # 0.0474
-    "BRCA_Pathogenic_Variant",   # 0.021
-    "HbA1c",                     # 0.020
-    "Systolic_BP",               # 0.0118
-    "HDL",                       # 0.0064
-    "Cholesterol",               # 0.006
-    "Glucose_Level",             # 0.0048
-    "PRS_Cardiometabolic",       # 0.004
-    "Physical_Activity_Level",   # 0.0038
-    "HRV",                       # 0.0022
-    "BMI",                      # CRÍTICO para "Calorie deficit"!
-    "Waist_Circumference",      # CRÍTICO para obesidade!
-    "Triglycerides",            # Importante para metabolismo
+    "Alcohol_Consumption",
+    "LDL",
+    "Gender",
+    "BRCA_Pathogenic_Variant",
+    "HbA1c",
+    "Systolic_BP",
+    "HDL",
+    "Cholesterol",
+    "Glucose_Level",
+    "PRS_Cardiometabolic",
+    "Physical_Activity_Level",
+    "HRV",
+    "BMI",
+    "Waist_Circumference",
+    "Triglycerides",      
 ]
 
 RANDOM_STATE = 42
@@ -70,7 +70,7 @@ y = df[TARGET].copy()
 print(f"\n{'='*70}")
 print(f"MODELO DE RECOMENDAÇÃO: {TARGET}")
 print(f"{'='*70}")
-print(f"Features selecionadas (Top 12 de importance_diet.py):")
+print(f"Features selecionadas (Top 15 de importance_diet.py):")
 for i, feat in enumerate(SELECTED_FEATURES, 1):
     print(f"  {i:2d}. {feat}")
 print(f"\nTotal de features: {len(SELECTED_FEATURES)}")
