@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import seaborn as sns
 import matplotlib.pyplot as plt
 from pathlib import Path
 from sklearn.model_selection import train_test_split
@@ -110,9 +111,9 @@ model = Pipeline(
             "rf",
             RandomForestClassifier(
                 n_estimators=200,
-                max_depth=10,
-                min_samples_leaf=3,
-                class_weight="balanced_subsample",
+                max_depth=15,
+                min_samples_leaf=2,
+                class_weight="balanced",
                 random_state=RANDOM_STATE,
                 n_jobs=-1,
             ),
@@ -147,13 +148,38 @@ print(classification_report(y_test, y_pred, target_names=label_enc.classes_))
 
 # MATRIZ DE CONFUSÃO
 
+# Matriz de confusão
 cm = confusion_matrix(y_test, y_pred)
-disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=label_enc.classes_)
-fig, ax = plt.subplots(figsize=(7, 6))
-disp.plot(ax=ax, xticks_rotation=45, colorbar=False)
-plt.title("Matriz de Confusão — Exercise_Recommendation (Final)")
+
+# Normalizar por linha (percentual por classe real)
+cm_percent = cm / cm.sum(axis=1, keepdims=True)
+
+# Quebrar nomes longos em múltiplas linhas
+labels = [s.replace("; ", ";\n") for s in label_enc.classes_]
+
+# Plot
+fig, ax = plt.subplots(figsize=(10, 6))
+
+sns.heatmap(
+    cm_percent,
+    annot=True,
+    fmt=".2f",
+    cmap="viridis",
+    xticklabels=labels,
+    yticklabels=labels,
+    cbar=False,
+    annot_kws={"size": 12},
+)
+
+plt.xticks(rotation=25, ha="right", fontsize=11)
+plt.yticks(rotation=0, fontsize=11)
+
+plt.title("Matriz de Confusão (Percentual) — Exercise_Recommendation", fontsize=15)
+plt.xlabel("Predicted label", fontsize=12)
+plt.ylabel("True label", fontsize=12)
+
 plt.tight_layout()
-plt.savefig(PLOTS_DIR / "confusion_matrix_exercise_final.png", dpi=150)
+plt.savefig(PLOTS_DIR / "confusion_matrix_exercise_percent.png", dpi=200)
 plt.show()
 
 # distribuição das classes

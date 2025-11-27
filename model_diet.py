@@ -1,6 +1,7 @@
 # model_final.py — versão enxuta e limpa do modelo de recomendação de dieta (com MAE)
 import pandas as pd
 import numpy as np
+import seaborn as sns
 import matplotlib.pyplot as plt
 from pathlib import Path
 from sklearn.model_selection import train_test_split
@@ -101,9 +102,9 @@ model = Pipeline(
             "rf",
             RandomForestClassifier(
                 n_estimators=200,
-                max_depth=10,
-                min_samples_leaf=3,
-                class_weight="balanced_subsample",
+                max_depth=15,
+                min_samples_leaf=2,
+                class_weight="balanced",
                 random_state=RANDOM_STATE,
                 n_jobs=-1,
             ),
@@ -139,12 +140,30 @@ print(classification_report(y_test, y_pred, target_names=label_enc.classes_))
 # MATRIZ DE CONFUSÃO
 
 cm = confusion_matrix(y_test, y_pred)
-disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=label_enc.classes_)
-fig, ax = plt.subplots(figsize=(7, 6))
-disp.plot(ax=ax, xticks_rotation=45, colorbar=False)
-plt.title("Matriz de Confusão — Diet_Recommendation (Final)")
+cm_percent = cm / cm.sum(axis=1, keepdims=True)
+
+fig, ax = plt.subplots(figsize=(9, 6))
+
+sns.heatmap(
+    cm_percent,
+    annot=True,
+    fmt=".2f",
+    cmap="viridis",
+    xticklabels=label_enc.classes_,
+    yticklabels=label_enc.classes_,
+    cbar=False,
+    annot_kws={"size": 12},
+)
+
+plt.xticks(rotation=25, ha="right", fontsize=10)
+plt.yticks(rotation=0, fontsize=10)
+
+plt.title("Matriz de Confusão (Percentual) — Diet_Recommendation", fontsize=14)
+plt.xlabel("Predicted", fontsize=12)
+plt.ylabel("True", fontsize=12)
+
 plt.tight_layout()
-plt.savefig(PLOTS_DIR / "confusion_matrix_diet_final.png", dpi=150)
+plt.savefig(PLOTS_DIR / "confusion_matrix_diet_percent.png", dpi=200)
 plt.show()
 
 # ver distribuição das classes
