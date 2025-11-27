@@ -27,31 +27,20 @@ TARGET = "Exercise_Recommendation"
 # FEATURES SELECIONADAS
 # Baseado em importâncias + evidência clínica para prescrição de exercício
 SELECTED_FEATURES = [
-    # Perfil lipídico (crítico para risco cardiovascular)
     "LDL",
     "HDL",
     "Cholesterol",
     "Triglycerides",
-    
-    # Metabolismo glicêmico (tolerância ao exercício)
     "HbA1c",
     "Glucose_Level",
-    
-    # Pressão e função cardiovascular
     "Systolic_BP",
     "Diastolic_BP",
-    "HRV",  # Variabilidade cardíaca - fundamental para exercício
-    
-    # Função renal e inflamação
+    "HRV",
     "eGFR",
     "CRP",
-    
-    # Risco genético e histórico
     "PRS_Cardiometabolic",
     "Family_History_CVD",
     "BRCA_Pathogenic_Variant",
-    
-    # Composição corporal e idade
     "BMI",
     "Waist_Circumference",
     "Age",
